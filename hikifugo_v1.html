@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>引き富豪 v1</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0d5c36;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif;min-height:100vh}
+header{padding:12px 14px;display:flex;justify-content:space-between;align-items:center;background:#08472a;position:sticky;top:0;z-index:5}
+h1{font-size:20px;margin:0}.status{font-size:13px;opacity:.9}
+main{max-width:900px;margin:auto;padding:12px}
+.players{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.p{background:#116b40;border-radius:10px;padding:8px;text-align:center;font-size:13px}.p.active{outline:3px solid #ffd54a}.p.me{grid-column:1/-1}.count{font-size:20px;font-weight:700}
+#table{min-height:150px;background:rgba(0,0,0,.14);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px;text-align:center}
+#field{min-height:85px;display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap}.empty{opacity:.55}
+.cards{display:flex;justify-content:center;flex-wrap:wrap;gap:7px;margin:14px 0}.card{width:55px;height:78px;border:0;border-radius:8px;background:#fff;color:#111;font-size:20px;font-weight:700;box-shadow:0 3px 5px #06351f;touch-action:manipulation}.card.red{color:#c62828}.card.sel{transform:translateY(-10px);outline:3px solid #ffd54a}.card:disabled{opacity:.45}
+.actions{display:flex;justify-content:center;gap:9px;flex-wrap:wrap}.actions button,.modal button{border:0;border-radius:10px;padding:11px 17px;font-size:15px;font-weight:700}.primary{background:#ffd54a}.secondary{background:#fff}.danger{background:#ff8a80}
+#log{margin-top:12px;background:rgba(0,0,0,.18);border-radius:10px;padding:9px;font-size:12px;max-height:115px;overflow:auto}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.68);display:none;align-items:center;justify-content:center;padding:20px;z-index:20}.box{background:#f7f7f7;color:#111;border-radius:16px;padding:20px;max-width:430px;width:100%;text-align:center}.box h2{margin-top:0}.choices{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin:12px 0}.choices button{background:#fff;border:2px solid #bbb}.choices button.sel{border-color:#16844e;background:#dff5e8}.small{font-size:12px;color:#555}
+</style>
+</head>
+<body>
+<header><h1>🎴 引き富豪 v1</h1><div class="status" id="status">あなたの番</div></header>
+<main>
+<div class="players" id="players"></div>
+<div id="table"><div id="field"></div><div id="turnMsg"></div></div>
+<div class="cards" id="hand"></div>
+<div class="actions">
+<button class="primary" id="playBtn">出す</button><button class="secondary" id="drawBtn">1枚引く</button><button class="secondary" id="passBtn">パス</button><button class="danger" id="newBtn">新しいゲーム</button>
+</div>
+<div id="log"></div>
+</main>
+<div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
+<script>
+const SUITS=[["♠",0],["♥",1],["♦",1],["♣",0]], RANKS=["3","4","5","6","7","8","9","10","J","Q","K","A","2"];
+let players,deck,field=[],fieldCount=0,turn=0,reverse=false,selected=[],drawnThisTurn=false,gameOver=false,passed=0;
+const $=id=>document.getElementById(id);
+function cardStr(c){return c.s+c.r}
+function value(c){let base=RANKS.indexOf(c.r)+3; return reverse?16-base:base}
+function makeDeck(){let d=[];for(const [s,red] of SUITS)for(const r of RANKS)d.push({s,r,red});d.push({s:"🃏",r:"JOKER",red:false});return d.sort(()=>Math.random()-.5)}
+function start(){
+ deck=makeDeck(); players=[{name:"あなた",hand:[],up:false},{name:"CPU 1",hand:[],up:false},{name:"CPU 2",hand:[],up:false},{name:"CPU 3",hand:[],up:false}];
+ for(let i=0;i<5;i++)players.forEach(p=>p.hand.push(deck.pop()));
+ players.forEach(p=>p.hand.sort((a,b)=>value(a)-value(b)));
+ field=[];fieldCount=0;turn=0;reverse=false;selected=[];drawnThisTurn=false;gameOver=false;passed=0;
+ log("ゲーム開始。あなたからスタート。");render();cpu();
+}
+function log(t){$("log").innerHTML="<div>"+t+"</div>"+$("log").innerHTML}
+function render(){
+ $("players").innerHTML=players.map((p,i)=>`<div class="p ${i===turn?"active":""} ${i===0?"me":""}">${p.name}<div class="count">${p.hand.length}枚</div></div>`).join("");
+ $("field").innerHTML=field.length?field.map(c=>`<button class="card ${c.red?'red':''}" disabled>${cardStr(c)}</button>`).join(""):`<span class="empty">場は空です</span>`;
+ $("turnMsg").textContent=gameOver?"ゲーム終了":`${players[turn].name}の番${reverse?"（11バック）":""}`;
+ $("status").textContent=gameOver?"結果":turn===0?"あなたの番":"CPU思考中";
+ $("hand").innerHTML=players[0].hand.map((c,i)=>`<button class="card ${c.red?'red':''} ${selected.includes(i)?'sel':''}" ${turn!==0||gameOver?'disabled':''} onclick="toggle(${i})">${cardStr(c)}</button>`).join("");
+ $("playBtn").disabled=turn!==0||gameOver; $("drawBtn").disabled=turn!==0||gameOver||drawnThisTurn; $("passBtn").disabled=turn!==0||gameOver;
+}
+function toggle(i){if(selected.includes(i))selected=selected.filter(x=>x!==i);else selected.push(i);render()}
+function canPlay(cards){
+ if(!cards.length)return false;
+ if(cards.some(c=>c.r==="JOKER")) return cards.length===1;
+ if(cards.length>1 && !cards.every(c=>c.r===cards[0].r))return false;
+ if(field.length && cards.length!==fieldCount)return false;
+ if(!field.length)return true;
+ if(cards.length===1 && cards[0].r==="JOKER")return true;
+ return value(cards[0])>value(field[0]);
+}
+function prohibitedFinish(cards, remaining){
+ if(remaining.length)return false;
+ if(cards.some(c=>c.r==="JOKER"||c.r==="2"||c.r==="8"))return true;
+ if(reverse && cards.some(c=>c.r==="3"))return true;
+ if(cards[0].r==="7" && remaining.length<cards.length)return true;
+ if(cards[0].r==="10" && remaining.length<cards.length)return true;
+ return false;
+}
+function play(){
+ const hand=players[0].hand, cards=selected.map(i=>hand[i]);
+ if(!canPlay(cards)){alert("そのカードは出せません。");return}
+ if(cards[0].r==="7" && hand.length-cards.length<cards.length){alert("7渡しに必要なカードが足りません。");return}
+ if(cards[0].r==="10" && hand.length-cards.length<cards.length){alert("10捨てに必要なカードが足りません。");return}
+ applyPlay(0,cards); selected=[]; drawnThisTurn=false;
+}
+function applyPlay(pi,cards){
+ let p=players[pi]; p.hand=p.hand.filter(c=>!cards.includes(c)); field=cards;fieldCount=cards.length;passed=0;
+ let r=cards[0].r;
+ if(r==="8"){field=[];fieldCount=0;log(`${p.name}が8切り。場が流れました。`)}
+ if(r==="J"){reverse=!reverse;log(`${p.name}が11バック。強さが${reverse?"逆転":"通常"}に。`)}
+ if(r==="7") special7(pi,cards.length);
+ if(r==="10") special10(pi,cards.length);
+ if(!p.hand.length && !prohibitedFinish(cards,p.hand)){p.up=true;endGame(pi);return}
+ nextTurn();
+}
+function special7(pi,n){
+ let target=(pi+1)%4; if(players[target].up)target=(target+1)%4;
+ if(pi===0) chooseGive(target,n); else{
+  let p=players[pi], choices=p.hand.slice().sort((a,b)=>value(b)-value(a)).slice(0,n);
+  p.hand=p.hand.filter(c=>!choices.includes(c)); players[target].hand.push(...choices);log(`${p.name}が${players[target].name}へ${n}枚渡しました。`);
+ }
+}
+function special10(pi,n){
+ let p=players[pi];
+ if(pi===0){chooseDiscard(n);return}
+ p.hand.sort(()=>Math.random()-.5);let gone=p.hand.splice(0,n);log(`${p.name}が${n}枚捨てました。`);
+}
+function chooseGive(target,n){
+ showChoice(`7渡し：${players[target].name}へ${n}枚渡すカードを選択`,players[0].hand,n,(chosen)=>{
+  let cards=chosen.map(i=>players[0].hand[i]);players[0].hand=players[0].hand.filter(c=>!cards.includes(c));players[target].hand.push(...cards);players[target].hand.sort((a,b)=>value(a)-value(b));log(`${players[target].name}へ${n}枚渡しました。`);afterSpecial();
+ });
+}
+function chooseDiscard(n){
+ showChoice(`10捨て：${n}枚選択`,players[0].hand,n,(chosen)=>{
+  let cards=chosen.map(i=>players[0].hand[i]);players[0].hand=players[0].hand.filter(c=>!cards.includes(c));log(`${n}枚捨てました。`);afterSpecial();
+ });
+}
+function afterSpecial(){render()}
+function showChoice(title,arr,n,cb){
+ const box=$("modalBox");let picks=[];box.innerHTML=`<h2>${title}</h2><div class="choices">${arr.map((c,i)=>`<button id="ch${i}" onclick="pick(${i})">${cardStr(c)}</button>`).join("")}</div><button class="primary" onclick="confirmPick()">確定</button><p class="small">必ず${n}枚選択してください</p>`;$("modal").style.display="flex";
+ window.pick=i=>{if(picks.includes(i))picks=picks.filter(x=>x!==i);else if(picks.length<n)picks.push(i);document.querySelectorAll(".choices button").forEach((b,i)=>b.classList.toggle("sel",picks.includes(i)))};
+ window.confirmPick=()=>{if(picks.length!==n){alert(`${n}枚選んでください`);return}$("modal").style.display="none";cb(picks)};
+}
+function draw(){
+ if(deck.length){players[0].hand.push(deck.pop());drawnThisTurn=true;players[0].hand.sort((a,b)=>value(a)-value(b));log("山札から1枚引きました。");render()}
+}
+function pass(){log("あなたはパス。");nextTurn()}
+function nextTurn(){turn=(turn+1)%4;selected=[];drawnThisTurn=false;render();cpu()}
+function cpu(){
+ if(gameOver||turn===0)return;
+ setTimeout(()=>{
+  let p=players[turn], playable=findPlay(p.hand);
+  if(!playable){if(deck.length){p.hand.push(deck.pop());p.hand.sort((a,b)=>value(a)-value(b));playable=findPlay(p.hand)}}
+  if(playable){applyPlay(turn,playable)}else{log(`${p.name}はパス。`);passed++;if(passed>=3){field=[];fieldCount=0;passed=0;log("全員パス。場が流れました。")}turn=(turn+1)%4;render();cpu()}
+ },650);
+}
+function findPlay(hand){
+ let groups={};hand.forEach(c=>(groups[c.r]??=[]).push(c));
+ let arr=Object.values(groups).filter(g=>g.length>=fieldCount&&fieldCount>0).map(g=>g.slice(0,fieldCount)).filter(canPlay).sort((a,b)=>value(a[0])-value(b[0]));
+ if(fieldCount===0)return [hand.slice().sort((a,b)=>value(a)-value(b))[0]];
+ return arr[0]||null;
+}
+function endGame(winner){
+ gameOver=true;let max=Math.max(...players.filter(p=>!p.up).map(p=>p.hand.length));let lines=players.map(p=>`${p.name}: ${p.hand.length}枚${p.hand.length===max&&!p.up?" ← 負け":p.up?" ← 上がり":""}`).join("<br>");
+ $("modalBox").innerHTML=`<h2>🎉 ${players[winner].name}が上がり！</h2><p>${lines}</p><p><b>負け額：${max*100}円</b></p><button class="primary" onclick="start()">もう一度</button>`;$("modal").style.display="flex";render()
+}
+$("playBtn").onclick=play;$("drawBtn").onclick=draw;$("passBtn").onclick=pass;$("newBtn").onclick=start;start();
+</script>
+</body>
+</html>

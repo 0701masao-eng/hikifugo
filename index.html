@@ -277,7 +277,12 @@ function ensureTurnCanAct(){
 
   if(playable){
     render();
-    if(turn!==0) cpu();
+    if(turn!==0){
+      setTimeout(()=>{
+        // CPUが実際にカードを出す
+        if(!gameOver && turn!==0) applyPlay(turn, playable);
+      },650);
+    }
     return;
   }
 
@@ -304,7 +309,7 @@ function ensureTurnCanAct(){
 
 function cpu(){
   if(gameOver||turn===0)return;
-  setTimeout(()=>ensureTurnCanAct(),650);
+  ensureTurnCanAct();
 }
 
 function findPlay(hand){

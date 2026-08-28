@@ -3,342 +3,247 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>引き富豪 v1.1</title>
+<title>引き富豪 v2.0</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#0d5c36;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif;min-height:100vh}
-header{padding:12px 14px;display:flex;justify-content:space-between;align-items:center;background:#08472a;position:sticky;top:0;z-index:5}
-h1{font-size:20px;margin:0}.status{font-size:13px;opacity:.9}
-main{max-width:900px;margin:auto;padding:12px}
-.players{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-.p{background:#116b40;border-radius:10px;padding:8px;text-align:center;font-size:13px}.p.active{outline:3px solid #ffd54a}.p.me{grid-column:1/-1}.count{font-size:20px;font-weight:700}
-#table{min-height:150px;background:rgba(0,0,0,.14);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px;text-align:center}
-#field{min-height:85px;display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap}.empty{opacity:.55}
-.cards{display:flex;justify-content:center;flex-wrap:wrap;gap:7px;margin:14px 0}
-.card{width:55px;height:78px;border:0;border-radius:8px;background:#fff;color:#111;font-size:20px;font-weight:700;box-shadow:0 3px 5px #06351f;touch-action:manipulation}
-.card.red{color:#c62828}.card.sel{transform:translateY(-10px);outline:3px solid #ffd54a}.card:disabled{opacity:.45}
-.actions{display:flex;justify-content:center;gap:9px;flex-wrap:wrap}
-.actions button,.modal button{border:0;border-radius:10px;padding:11px 17px;font-size:15px;font-weight:700}
-.primary{background:#ffd54a}.secondary{background:#fff}.danger{background:#ff8a80}
-#log{margin-top:12px;background:rgba(0,0,0,.18);border-radius:10px;padding:9px;font-size:12px;max-height:180px;overflow:auto}
-.history-title{font-weight:700;margin-bottom:5px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.68);display:none;align-items:center;justify-content:center;padding:20px;z-index:20}
-.box{background:#f7f7f7;color:#111;border-radius:16px;padding:20px;max-width:430px;width:100%;text-align:center}
-.box h2{margin-top:0}.choices{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin:12px 0}
-.choices button{background:#fff;border:2px solid #bbb}.choices button.sel{border-color:#16844e;background:#dff5e8}.small{font-size:12px;color:#555}
+body{margin:0;background:#0b6339;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif}
+header{height:52px;background:#06482a;display:flex;align-items:center;justify-content:space-between;padding:0 14px;position:sticky;top:0;z-index:5}
+h1{font-size:19px;margin:0}.status{font-size:13px}
+main{max-width:900px;margin:auto;padding:10px}
+.table{position:relative;height:560px;border-radius:20px;background:#0d7040;border:2px solid rgba(255,255,255,.15);box-shadow:inset 0 0 40px rgba(0,0,0,.12);overflow:hidden}
+.center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:280px;min-height:155px;border-radius:18px;background:rgba(0,0,0,.13);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px}
+.center-title{font-size:12px;opacity:.75;margin-bottom:6px}
+.field{display:flex;justify-content:center;align-items:center;gap:5px;min-height:72px;flex-wrap:wrap}
+.seat{position:absolute;background:#116c3e;border-radius:12px;padding:7px 12px;min-width:100px;text-align:center;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.seat.active{outline:3px solid #ffd54a}.seat.top{top:10px;left:50%;transform:translateX(-50%)}.seat.left{left:10px;top:50%;transform:translateY(-50%)}.seat.right{right:10px;top:50%;transform:translateY(-50%)}.seat.bottom{bottom:10px;left:50%;transform:translateX(-50%)}
+.count{font-size:19px;font-weight:700}
+.last{position:absolute;display:flex;gap:3px;flex-wrap:wrap;max-width:145px;justify-content:center;align-items:center}.last.top{top:65px;left:50%;transform:translateX(-50%)}.last.left{left:112px;top:50%;transform:translateY(-50%)}.last.right{right:112px;top:50%;transform:translateY(-50%)}.last.bottom{bottom:65px;left:50%;transform:translateX(-50%)}
+.card{width:48px;height:68px;border:0;border-radius:7px;background:#fff;color:#111;font-size:18px;font-weight:700;box-shadow:0 2px 4px rgba(0,0,0,.35)}.card.red{color:#d02020}.card.sel{transform:translateY(-9px);outline:3px solid #ffd54a}
+.hand{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;padding:12px 0 6px}.hand .card{width:52px;height:76px}
+.actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}.actions button{border:0;border-radius:10px;padding:11px 18px;font-size:15px;font-weight:700}.play{background:#ffd54a}.draw{background:#fff}.new{background:#ff9c92}
+#log{margin-top:10px;background:rgba(0,0,0,.18);border-radius:10px;padding:9px;font-size:12px;max-height:145px;overflow:auto}.logtitle{font-weight:700;margin-bottom:5px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.68);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}.box{background:#fff;color:#111;border-radius:16px;padding:20px;width:min(430px,100%);text-align:center}.box button{border:0;border-radius:9px;padding:10px 15px;font-weight:700}.choices{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:12px 0}.choices button{background:#fff;border:2px solid #aaa}.choices button.on{border-color:#16844e;background:#dff5e8}
+@media(max-width:600px){.table{height:500px}.center{width:210px}.card{width:42px;height:60px;font-size:16px}.hand .card{width:45px;height:67px}.last.left{left:92px}.last.right{right:92px}.seat{min-width:82px;padding:6px 8px}}
 </style>
 </head>
 <body>
-<header><h1>🎴 引き富豪 v1.1</h1><div class="status" id="status">あなたの番</div></header>
+<header><h1>🎴 引き富豪</h1><div class="status" id="status">あなたの番</div></header>
 <main>
-<div class="players" id="players"></div>
-<div id="table"><div id="field"></div><div id="turnMsg"></div></div>
-<div class="cards" id="hand"></div>
-<div class="actions">
-<button class="primary" id="playBtn">出す</button>
-<button class="secondary" id="drawBtn">1枚引く</button>
-<button class="danger" id="newBtn">新しいゲーム</button>
+<div class="table">
+  <div class="seat top" id="seat2"></div>
+  <div class="seat left" id="seat1"></div>
+  <div class="seat right" id="seat3"></div>
+  <div class="seat bottom" id="seat0"></div>
+  <div class="last top" id="last2"></div>
+  <div class="last left" id="last1"></div>
+  <div class="last right" id="last3"></div>
+  <div class="last bottom" id="last0"></div>
+  <div class="center">
+    <div class="center-title">現在の場</div>
+    <div class="field" id="field"></div>
+    <div id="turnMsg"></div>
+  </div>
 </div>
-<div id="log"><div class="history-title">プレイ履歴</div></div>
+<div class="hand" id="hand"></div>
+<div class="actions">
+  <button class="play" id="playBtn">出す</button>
+  <button class="draw" id="drawBtn">1枚引く</button>
+  <button class="new" id="newBtn">新しいゲーム</button>
+</div>
+<div id="log"><div class="logtitle">プレイ履歴</div></div>
 </main>
-<div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
+<div class="modal" id="modal"><div class="box" id="box"></div></div>
 
 <script>
-const SUITS=[["♠",0],["♥",1],["♦",1],["♣",0]], RANKS=["3","4","5","6","7","8","9","10","J","Q","K","A","2"];
-let players,deck,field=[],fieldCount=0,turn=0,reverse=false,selected=[],drawnThisTurn=false,gameOver=false,passed=0;
+const suits=[["♠",false],["♥",true],["♦",true],["♣",false]];
+const ranks=["3","4","5","6","7","8","9","10","J","Q","K","A","2"];
+let players,deck,field=[],fieldCount=0,turn=0,selected=[],drawnThisTurn=false,gameOver=false,lastPlayed=[[],[],[],[]],up=[false,false,false,false];
 
 const $=id=>document.getElementById(id);
-function cardStr(c){return c.s+c.r}
-function value(c){let base=RANKS.indexOf(c.r)+3; return reverse?16-base:base}
-function makeDeck(){
-  let d=[];
-  for(const [s,red] of SUITS)for(const r of RANKS)d.push({s,r,red});
+function cardText(c){return c.s+c.r}
+function rankValue(c){return ranks.indexOf(c.r)+3}
+function newDeck(){
+  const d=[];
+  for(const [s,red] of suits) for(const r of ranks) d.push({s,r,red});
   d.push({s:"🃏",r:"JOKER",red:false});
-  return d.sort(()=>Math.random()-.5)
+  return d.sort(()=>Math.random()-.5);
 }
-
 function start(){
-  deck=makeDeck();
+  deck=newDeck();
   players=[
-    {name:"あなた",hand:[],up:false},
-    {name:"CPU 1",hand:[],up:false},
-    {name:"CPU 2",hand:[],up:false},
-    {name:"CPU 3",hand:[],up:false}
+    {name:"あなた",hand:[]},
+    {name:"CPU 1",hand:[]},
+    {name:"CPU 2",hand:[]},
+    {name:"CPU 3",hand:[]}
   ];
-  for(let i=0;i<5;i++)players.forEach(p=>p.hand.push(deck.pop()));
-  players.forEach(p=>p.hand.sort((a,b)=>value(a)-value(b)));
-  field=[];fieldCount=0;turn=0;reverse=false;selected=[];drawnThisTurn=false;gameOver=false;passed=0;
-  $("log").innerHTML='<div class="history-title">プレイ履歴</div>';
+  // 4人に13枚ずつ＋ジョーカーを含む53枚。余りは引き札。
+  for(let i=0;i<13;i++) players.forEach(p=>p.hand.push(deck.pop()));
+  players.forEach(p=>p.hand.sort((a,b)=>rankValue(a)-rankValue(b)));
+  field=[];fieldCount=0;turn=0;selected=[];drawnThisTurn=false;gameOver=false;lastPlayed=[[],[],[],[]];up=[false,false,false,false];
+  $("log").innerHTML='<div class="logtitle">プレイ履歴</div>';
   log("ゲーム開始。あなたからスタート。");
-  render();
-  ensureTurnCanAct();
+  render();takeAutomaticAction();
 }
-
-function log(t){
-  $("log").innerHTML="<div>"+t+"</div>"+$("log").innerHTML;
-}
-
+function log(t){$("log").innerHTML=`<div>${t}</div>`+$("log").innerHTML}
 function render(){
-  $("players").innerHTML=players.map((p,i)=>
-    `<div class="p ${i===turn?"active":""} ${i===0?"me":""}">
-      ${p.name}<div class="count">${p.hand.length}枚</div>
-    </div>`).join("");
-
+  const ids=["seat0","seat1","seat2","seat3"];
+  ids.forEach((id,i)=>{
+    const e=$(id);e.classList.toggle("active",i===turn);
+    e.innerHTML=`${players[i].name}<div class="count">${players[i].hand.length}枚</div>`;
+    $(\`last${i}\`).innerHTML=lastPlayed[i].map(c=>`<button class="card ${c.red?"red":""}" disabled>${cardText(c)}</button>`).join("");
+  });
   $("field").innerHTML=field.length
-    ? field.map(c=>`<button class="card ${c.red?'red':''}" disabled>${cardStr(c)}</button>`).join("")
-    : `<span class="empty">場は空です</span>`;
-
-  $("turnMsg").textContent=gameOver?"ゲーム終了":`${players[turn].name}の番${reverse?"（11バック）":""}`;
+    ? field.map(c=>`<button class="card ${c.red?"red":""}" disabled>${cardText(c)}</button>`).join("")
+    : `<span style="opacity:.55">場は空です</span>`;
+  $("turnMsg").textContent=gameOver?"ゲーム終了":`${players[turn].name}の番`;
   $("status").textContent=gameOver?"結果":turn===0?"あなたの番":"CPU思考中";
-
   $("hand").innerHTML=players[0].hand.map((c,i)=>
-    `<button class="card ${c.red?'red':''} ${selected.includes(i)?'sel':''}"
-      ${turn!==0||gameOver?'disabled':''} onclick="toggle(${i})">${cardStr(c)}</button>`).join("");
-
+    `<button class="card ${c.red?"red":""} ${selected.includes(i)?"sel":""}" ${turn!==0||gameOver?"disabled":""} onclick="selectCard(${i})">${cardText(c)}</button>`
+  ).join("");
   $("playBtn").disabled=turn!==0||gameOver;
-  $("drawBtn").disabled=turn!==0||gameOver||drawnThisTurn;
+  $("drawBtn").disabled=turn!==0||gameOver||drawnThisTurn||!deck.length;
 }
-
-function toggle(i){
+function selectCard(i){
   if(selected.includes(i))selected=selected.filter(x=>x!==i);
   else selected.push(i);
   render();
 }
-
+function isSpade3(c){return c.s==="♠"&&c.r==="3"}
 function canPlay(cards){
   if(!cards.length)return false;
-  if(cards.some(c=>c.r==="JOKER")) return cards.length===1;
   if(cards.length>1 && !cards.every(c=>c.r===cards[0].r))return false;
   if(field.length && cards.length!==fieldCount)return false;
   if(!field.length)return true;
-  if(cards.length===1 && cards[0].r==="JOKER")return true;
-  return value(cards[0])>value(field[0]);
+  if(field.length===1 && field[0].r==="JOKER")return cards.length===1&&isSpade3(cards[0]);
+  if(cards.length===1&&cards[0].r==="JOKER")return true;
+  return rankValue(cards[0])>rankValue(field[0]);
 }
-
-function prohibitedFinish(cards, remaining){
-  if(remaining.length)return false;
-  if(cards.some(c=>c.r==="JOKER"||c.r==="2"||c.r==="8"))return true;
-  if(reverse && cards.some(c=>c.r==="3"))return true;
-  if(cards[0].r==="7" && remaining.length<cards.length)return true;
-  if(cards[0].r==="10" && remaining.length<cards.length)return true;
-  return false;
+function findPlay(hand){
+  if(!field.length){
+    const nonJ=hand.find(c=>c.r!=="JOKER");
+    return nonJ?[nonJ]:(hand[0]?[hand[0]]:null);
+  }
+  if(field.length===1&&field[0].r==="JOKER"){
+    const c=hand.find(isSpade3);return c?[c]:null;
+  }
+  const n=fieldCount;
+  const groups={};
+  hand.forEach(c=>{if(c.r!=="JOKER")(groups[c.r]??=[]).push(c)});
+  return Object.values(groups).filter(g=>g.length>=n).map(g=>g.slice(0,n)).filter(canPlay).sort((a,b)=>rankValue(a[0])-rankValue(b[0]))[0]||null;
 }
-
 function play(){
-  const hand=players[0].hand, cards=selected.map(i=>hand[i]);
+  const cards=selected.map(i=>players[0].hand[i]);
   if(!canPlay(cards)){alert("そのカードは出せません。");return}
-  if(cards[0].r==="7" && hand.length-cards.length<cards.length){
-    alert("7渡しに必要なカードが足りません。");return
-  }
-  if(cards[0].r==="10" && hand.length-cards.length<cards.length){
-    alert("10捨てに必要なカードが足りません。");return
-  }
   applyPlay(0,cards);
   selected=[];
-  drawnThisTurn=false;
 }
-
 function applyPlay(pi,cards){
-  let p=players[pi];
+  const p=players[pi];
+  const wasJoker=field.length===1 && field[0].r==="JOKER";
   p.hand=p.hand.filter(c=>!cards.includes(c));
-  field=cards;
-  fieldCount=cards.length;
-  passed=0;
+  field=cards.slice();fieldCount=cards.length;lastPlayed[pi]=cards.slice();
+  log(`${p.name}：${cards.map(cardText).join(" ")}`);
 
-  log(`${p.name}：${cards.map(cardStr).join(" ")}`);
+  // ♠3返し：ジョーカーを即座に流し、♠3を出した人が続ける
+  if(wasJoker && cards.length===1 && isSpade3(cards[0])){
+    field=[];fieldCount=0;
+    log(`${p.name}：♠3返し！場を流して、そのまま続けます。`);
+    if(p.hand.length===0){up[pi]=true;endGame(pi);return}
+    turn=pi;selected=[];drawnThisTurn=false;render();takeAutomaticAction();return;
+  }
 
-  let r=cards[0].r;
-
+  const r=cards[0].r;
+  if(r==="JOKER" && cards.length===1){
+    nextTurn();return;
+  }
   if(r==="8"){
-    field=[];
-    fieldCount=0;
-    log(`${p.name}：8流し → 場が流れました。もう一度${p.name}の番。`);
+    field=[];fieldCount=0;
+    log(`${p.name}：8流し！そのまま${p.name}が続けます。`);
+    turn=pi;drawnThisTurn=false;selected=[];render();takeAutomaticAction();return;
   }
-
-  if(r==="J"){
-    reverse=!reverse;
-    log(`${p.name}：11バック → 強さが${reverse?"逆転":"通常"}に。`);
+  // 7渡し：まず渡してから対象者の番
+  if(r==="7"){
+    const target=(pi+1)%4;
+    const n=cards.length;
+    if(p.hand.length<n){
+      log(`${p.name}：7渡しのカードが足りないため渡せません。`);
+    }else if(pi===0){
+      chooseGive(target,n);
+      return;
+    }else{
+      const give=p.hand.slice().sort((a,b)=>rankValue(b)-rankValue(a)).slice(0,n);
+      p.hand=p.hand.filter(c=>!give.includes(c));
+      players[target].hand.push(...give);
+      players[target].hand.sort((a,b)=>rankValue(a)-rankValue(b));
+      log(`${p.name} → ${players[target].name}：${give.map(cardText).join(" ")} を7渡し`);
+      turn=target;drawnThisTurn=false;selected=[];render();takeAutomaticAction();return;
+    }
   }
-
-  if(r==="7") special7(pi,cards.length);
-  if(r==="10") special10(pi,cards.length);
-
-  if(!p.hand.length && !prohibitedFinish(cards,p.hand)){
-    p.up=true;
-    endGame(pi);
-    return;
-  }
-
-  // 8流しは同じ人が続けて出す
-  if(r==="8"){
-    selected=[];
-    drawnThisTurn=false;
-    turn=pi;
-    render();
-    ensureTurnCanAct();
-    return;
-  }
-
+  if(p.hand.length===0){up[pi]=true;endGame(pi);return}
   nextTurn();
 }
-
-function special7(pi,n){
-  let target=(pi+1)%4;
-  if(players[target].up)target=(target+1)%4;
-  if(pi===0) chooseGive(target,n);
-  else{
-    let p=players[pi], choices=p.hand.slice().sort((a,b)=>value(b)-value(a)).slice(0,n);
-    p.hand=p.hand.filter(c=>!choices.includes(c));
-    players[target].hand.push(...choices);
-    log(`${p.name}が${players[target].name}へ${n}枚渡しました。`);
-  }
-}
-
-function special10(pi,n){
-  let p=players[pi];
-  if(pi===0){chooseDiscard(n);return}
-  p.hand.sort(()=>Math.random()-.5);
-  let gone=p.hand.splice(0,n);
-  log(`${p.name}が${n}枚捨てました。`);
-}
-
 function chooseGive(target,n){
-  showChoice(`7渡し：${players[target].name}へ${n}枚渡すカードを選択`,
-    players[0].hand,n,(chosen)=>{
-      let cards=chosen.map(i=>players[0].hand[i]);
-      players[0].hand=players[0].hand.filter(c=>!cards.includes(c));
-      players[target].hand.push(...cards);
-      players[target].hand.sort((a,b)=>value(a)-value(b));
-      log(`${players[target].name}へ${n}枚渡しました。`);
-      afterSpecial();
-    });
-}
-
-function chooseDiscard(n){
-  showChoice(`10捨て：${n}枚選択`,players[0].hand,n,(chosen)=>{
-    let cards=chosen.map(i=>players[0].hand[i]);
-    players[0].hand=players[0].hand.filter(c=>!cards.includes(c));
-    log(`${n}枚捨てました。`);
-    afterSpecial();
-  });
-}
-
-function afterSpecial(){
-  render();
-}
-
-function showChoice(title,arr,n,cb){
-  const box=$("modalBox");
+  const box=$("box");
   let picks=[];
-  box.innerHTML=`<h2>${title}</h2><div class="choices">${
-    arr.map((c,i)=>`<button id="ch${i}" onclick="pick(${i})">${cardStr(c)}</button>`).join("")
-  }</div><button class="primary" onclick="confirmPick()">確定</button><p class="small">必ず${n}枚選択してください</p>`;
+  box.innerHTML=`<h2>7渡し</h2><p>${players[target].name}へ${n}枚渡すカードを選んでください。</p><div class="choices" id="choices"></div><button onclick="confirmGive()">確定</button>`;
+  const area=$("choices");
+  players[0].hand.forEach((c,i)=>{
+    const b=document.createElement("button");b.textContent=cardText(c);b.className="card "+(c.red?"red":"");
+    b.onclick=()=>{if(picks.includes(i))picks=picks.filter(x=>x!==i);else if(picks.length<n)picks.push(i);b.classList.toggle("on",picks.includes(i))};
+    area.appendChild(b);
+  });
   $("modal").style.display="flex";
-
-  window.pick=i=>{
-    if(picks.includes(i))picks=picks.filter(x=>x!==i);
-    else if(picks.length<n)picks.push(i);
-    document.querySelectorAll(".choices button").forEach((b,i)=>b.classList.toggle("sel",picks.includes(i)));
-  };
-
-  window.confirmPick=()=>{
+  window.confirmGive=()=>{
     if(picks.length!==n){alert(`${n}枚選んでください`);return}
+    const give=picks.map(i=>players[0].hand[i]);
+    players[0].hand=players[0].hand.filter(c=>!give.includes(c));
+    players[target].hand.push(...give);players[target].hand.sort((a,b)=>rankValue(a)-rankValue(b));
+    log(`あなた → ${players[target].name}：${give.map(cardText).join(" ")} を7渡し`);
     $("modal").style.display="none";
-    cb(picks);
+    turn=target;selected=[];drawnThisTurn=false;render();takeAutomaticAction();
   };
 }
-
-function draw(){
-  if(turn!==0||gameOver||drawnThisTurn||!deck.length)return;
-  const c=deck.pop();
-  players[0].hand.push(c);
-  drawnThisTurn=true;
-  players[0].hand.sort((a,b)=>value(a)-value(b));
-  log(`あなた：1枚引く → ${cardStr(c)}`);
-  render();
+function drawHuman(){
+  if(turn!==0||drawnThisTurn||!deck.length||gameOver)return;
+  const c=deck.pop();players[0].hand.push(c);players[0].hand.sort((a,b)=>rankValue(a)-rankValue(b));
+  drawnThisTurn=true;log(`あなた：出せないので1枚引く → ${cardText(c)}`);render();
 }
-
 function nextTurn(){
-  turn=(turn+1)%4;
-  selected=[];
-  drawnThisTurn=false;
-  render();
-  ensureTurnCanAct();
+  do{turn=(turn+1)%4}while(up[turn]&&players.some((p,i)=>!up[i]));
+  selected=[];drawnThisTurn=false;render();takeAutomaticAction();
 }
-
-// 出せない場合は必ず1枚引く。
-// 人間は引いた後、自分でカードを選ぶ。
-// CPUは引いたカードを含めて出せるなら自動で出す。
-function ensureTurnCanAct(){
+function takeAutomaticAction(){
   if(gameOver)return;
-
   const p=players[turn];
   const playable=findPlay(p.hand);
-
   if(playable){
-    render();
-    if(turn!==0){
-      setTimeout(()=>{
-        // CPUが実際にカードを出す
-        if(!gameOver && turn!==0) applyPlay(turn, playable);
-      },650);
-    }
+    if(turn===0){render();return}
+    setTimeout(()=>applyPlay(turn,playable),650);
     return;
   }
-
+  // 出せないなら強制1枚引く
   if(deck.length){
-    const drawn=deck.pop();
-    p.hand.push(drawn);
-    p.hand.sort((a,b)=>value(a)-value(b));
-    log(`${p.name}：出せないため1枚引く → ${cardStr(drawn)}`);
+    const c=deck.pop();p.hand.push(c);p.hand.sort((a,b)=>rankValue(a)-rankValue(b));
+    log(`${p.name}：出せないので1枚引く → ${cardText(c)}`);
     render();
-
-    if(turn!==0){
-      setTimeout(()=>{
-        const afterDraw=findPlay(p.hand);
-        if(afterDraw) applyPlay(turn,afterDraw);
-        else nextTurn();
-      },450);
-    }
-    return;
+    if(turn===0){drawnThisTurn=true;return}
+    setTimeout(()=>{
+      const after=findPlay(p.hand);
+      if(after)applyPlay(turn,after);else nextTurn();
+    },500);
+  }else{
+    log(`${p.name}：山札がないため次の番へ`);
+    nextTurn();
   }
-
-  log(`${p.name}：山札がなく出せないため次の番へ`);
-  nextTurn();
 }
-
-function cpu(){
-  if(gameOver||turn===0)return;
-  ensureTurnCanAct();
-}
-
-function findPlay(hand){
-  let groups={};
-  hand.forEach(c=>(groups[c.r]??=[]).push(c));
-  let arr=Object.values(groups)
-    .filter(g=>g.length>=fieldCount&&fieldCount>0)
-    .map(g=>g.slice(0,fieldCount))
-    .filter(canPlay)
-    .sort((a,b)=>value(a[0])-value(b[0]));
-
-  if(fieldCount===0){
-    let joker=hand.find(c=>c.r==="JOKER");
-    return joker?[joker]:[hand.slice().sort((a,b)=>value(a)-value(b))[0]];
-  }
-  return arr[0]||null;
-}
-
 function endGame(winner){
   gameOver=true;
-  let max=Math.max(...players.filter(p=>!p.up).map(p=>p.hand.length));
-  let lines=players.map(p=>`${p.name}: ${p.hand.length}枚${p.hand.length===max&&!p.up?" ← 負け":p.up?" ← 上がり":""}`).join("<br>");
-  $("modalBox").innerHTML=`<h2>🎉 ${players[winner].name}が上がり！</h2><p>${lines}</p><p><b>負け額：${max*100}円</b></p><button class="primary" onclick="start()">もう一度</button>`;
-  $("modal").style.display="flex";
-  render();
+  log(`${players[winner].name}が上がりました！`);
+  $("box").innerHTML=`<h2>🎉 ${players[winner].name}が上がり！</h2><p>${players.map(p=>`${p.name}：${p.hand.length}枚`).join("<br>")}</p><button onclick="start()">もう一度</button>`;
+  $("modal").style.display="flex";render();
 }
-
 $("playBtn").onclick=play;
-$("drawBtn").onclick=draw;
+$("drawBtn").onclick=drawHuman;
 $("newBtn").onclick=start;
 start();
 </script>
